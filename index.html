@@ -73,7 +73,7 @@
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+<body class="flex items-center justify-center min-h-screen bg-gray-100 p-4 pb-16"> <!-- 增加底部 padding -->
 
     <div class="w-full max-w-2xl mx-auto">
         
@@ -174,6 +174,11 @@
 
         </main>
     </div>
+
+    <!-- Credit Footer -->
+    <footer class="fixed bottom-4 right-6 text-sm text-gray-500">
+        Created by Mr. Fan Ho Yin
+    </footer>
 
     <script>
         // --- 靜態題庫 ---
@@ -510,7 +515,7 @@
             summaryScreen.classList.add('hidden');
             quizScreen.classList.remove('hidden');
 
-            // 載入第一題
+            // D載入第一題
             displayQuestion();
         }
 
@@ -575,7 +580,7 @@
                 answerStatus.className = 'mt-6 text-xl font-bold text-green-600';
                 answerStatus.classList.remove('hidden');
             } else {
-                // D答錯
+                // 答錯
                 selectedButton.classList.add('wrong');
                 const correctButton = optionsContainer.querySelector(`[data-index="${correctAnwserIndex}"]`);
                 if (correctButton) {
@@ -591,7 +596,7 @@
             feedbackContainer.classList.remove('hidden');
 
             // 顯示「下一題」按鈕
-            nextButton.classList.remove('hidden');
+            nextButton.classList.add('hidden');
             
             // 更新即時分數
             currentScore.textContent = `目前得分：${sessionScore}`;

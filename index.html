@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 適性學習測驗 - 指數</title>
+    <!-- 引入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定義樣式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f7fafc; /* Tailwind gray-100 */
+        }
+        
+        /* 自定義按鈕基礎樣式 */
+        .primary-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 選項按鈕樣式 */
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e2e8f0; /* gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            background-color: #ffffff; /* white */
+            text-align: left;
+            font-weight: 500;
+            color: #2d3748; /* gray-800 */
+            transition: all 0.2s ease;
+        }
+        .option-btn:hover {
+            border-color: #4299e1; /* blue-500 */
+            background-color: #ebf8ff; /* blue-50 */
+        }
+        .option-btn:disabled {
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+
+        /* 答對的樣式 */
+        .option-btn.correct {
+            border-color: #38a169; /* green-600 */
+            background-color: #f0fff4; /* green-50 */
+            color: #276749; /* green-800 */
+            font-weight: 700;
+        }
+        /* 答錯的樣式 */
+        .option-btn.wrong {
+            border-color: #e53e3e; /* red-600 */
+            background-color: #fff5f5; /* red-50 */
+            color: #c53030; /* red-800 */
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+
+    <div class="w-full max-w-2xl mx-auto">
+        
+        <!-- 頂部標題和難度顯示 -->
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl font-bold text-gray-800">數學適性學習</h1>
+            <p class="text-lg text-gray-600">主題：指數 (Indices)</p>
+            <div id="difficulty-display" class="mt-4 inline-block bg-blue-100 text-blue-800 text-sm font-semibold px-4 py-2 rounded-full">
+                目前難度：初級
+            </div>
+        </header>
+
+        <!-- 主內容區域 -->
+        <main id="app-container" class="bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+
+            <!-- 1. 開始畫面 (預設顯示) -->
+            <div id="start-screen" class="">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">準備好開始了嗎？</h2>
+                <p class="text-gray-600 mb-6">點擊按鈕，系統將根據您目前的難度「<span id="start-difficulty-label" class="font-bold">初級</span>」，隨機抽取 5 道題目。</p>
+                <button id="start-button" class="w-full primary-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                    開始測驗
+                </button>
+            </div>
+
+            <!-- 2. 測驗畫面 (預設隱藏) -->
+            <div id="quiz-screen" class="hidden">
+                <!-- 題目進度 -->
+                <div class="mb-4 flex justify-between items-center">
+                    <span id="question-counter" class="text-sm font-medium text-gray-600">題目 1 / 5</span>
+                    <span id="current-score" class="text-sm font-medium text-blue-600">目前得分：0</span>
+                </div>
+
+                <!-- 題目內容 -->
+                <div class="mb-6">
+                    <p id="question-text" class="text-xl font-semibold text-gray-800 leading-relaxed" style="min-height: 4rem;">
+                        <!-- 題目將由 JS 動態生成 (使用 innerHTML) -->
+                    </p>
+                </div>
+
+                <!-- 選項容器 -->
+                <div id="options-container" class="space-y-3">
+                    <!-- 選項將由 JS 動態生成 (使用 innerHTML) -->
+                </div>
+
+                <!-- 對/錯 反饋 (新加入) -->
+                <div id="answer-status" class="hidden mt-6 text-xl font-bold">
+                    <!-- JS 將會設定文字和顏色 -->
+                </div>
+
+                <!-- 正確答案反饋 (修改 mt-4 為 mt-2) -->
+                <div id="feedback-container" class="hidden mt-2 p-4 rounded-lg bg-green-50 border border-green-200">
+                    <p class="font-semibold text-green-800">正確答案：</p>
+                    <p id="correct-answer-text" class="text-green-700"></p>
+                </div>
+
+                <!-- 下一題按鈕 (預設隱藏) -->
+                <button id="next-button" class="w-full mt-8 primary-btn bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 hidden">
+                    下一題
+                </button>
+            </div>
+
+            <!-- 3. 總結畫面 (預設隱藏) -->
+            <div id="summary-screen" class="hidden text-center">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">本輪總結</h2>
+                <p id="summary-text" class="text-lg text-gray-600 mb-6">您在 5 題中答對了 0 題。</p>
+                <div id="assessment-feedback" class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p id="assessment-text" class="text-yellow-800 font-medium"></p>
+                </div>
+                <button id="next-session-button" class="w-full primary-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                    開始下一輪
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 靜態題庫 ---
+        // 難度：HKDSE，所有答案均為正指數
+        const questionBank = {
+            '初級': [
+                // 1-10
+                { question: "化簡 (a<sup>3</sup>b<sup>-2</sup>)<sup>-1</sup>", options: ["a<sup>3</sup>b<sup>2</sup>", "1 / (a<sup>3</sup>b<sup>2</sup>)", "b<sup>2</sup> / a<sup>3</sup>", "a<sup>-3</sup>b<sup>2</sup>"], correctAnswerIndex: 2 },
+                { question: "化簡 (x<sup>-5</sup>y<sup>2</sup>)<sup>2</sup>", options: ["y<sup>4</sup> / x<sup>10</sup>", "x<sup>10</sup>y<sup>4</sup>", "x<sup>-10</sup>y<sup>4</sup>", "y<sup>4</sup> / x<sup>7</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (p<sup>-1</sup>q<sup>3</sup>)<sup>-2</sup>", options: ["p<sup>2</sup> / q<sup>6</sup>", "q<sup>6</sup> / p<sup>2</sup>", "p<sup>-2</sup>q<sup>-6</sup>", "p<sup>2</sup>q<sup>-6</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (m<sup>4</sup>n<sup>-1</sup>) / (m<sup>-1</sup>)", options: ["m<sup>3</sup> / n", "m<sup>5</sup> / n", "m<sup>3</sup>n", "m<sup>5</sup>n"], correctAnswerIndex: 1 },
+                { question: "化簡 (a<sup>2</sup>b<sup>3</sup>)(a<sup>-3</sup>b<sup>-1</sup>)", options: ["b<sup>2</sup> / a", "a / b<sup>2</sup>", "ab<sup>2</sup>", "a<sup>-1</sup>b<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (x<sup>0</sup>y<sup>-2</sup>)<sup>-3</sup> (x 不等於 0)", options: ["y<sup>6</sup>", "1 / y<sup>6</sup>", "y<sup>-6</sup>", "x<sup>-3</sup>y<sup>6</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (k<sup>5</sup>) / (k<sup>-2</sup>k<sup>3</sup>)", options: ["k<sup>4</sup>", "k<sup>6</sup>", "k<sup>10</sup>", "1 / k<sup>4</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (a<sup>-2</sup>b<sup>4</sup>c<sup>-1</sup>)<sup>2</sup>", options: ["b<sup>8</sup> / (a<sup>4</sup>c<sup>2</sup>)", "a<sup>4</sup>b<sup>8</sup>c<sup>2</sup>", "b<sup>6</sup> / (a<sup>4</sup>c)", "b<sup>8</sup> / (a<sup>4</sup>c)"], correctAnswerIndex: 0 },
+                { question: "化簡 (x<sup>2</sup>y<sup>-3</sup>) / (x<sup>-1</sup>y<sup>-5</sup>)", options: ["x<sup>3</sup>y<sup>2</sup>", "x / y<sup>2</sup>", "x<sup>3</sup> / y<sup>8</sup>", "x<sup>3</sup> / y<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (2a<sup>-1</sup>b<sup>2</sup>)<sup>3</sup>", options: ["8b<sup>6</sup> / a<sup>3</sup>", "6b<sup>6</sup> / a<sup>3</sup>", "8a<sup>-3</sup>b<sup>6</sup>", "2b<sup>6</sup> / a<sup>3</sup>"], correctAnswerIndex: 0 },
+                // 11-20
+                { question: "化簡 (x<sup>-1</sup> + y<sup>-1</sup>) / (x<sup>-1</sup>)", options: ["y", "1 + x/y", "1 + y/x", "(x+y)/y"], correctAnswerIndex: 2 },
+                { question: "化簡 (a<sup>4</sup>b<sup>-2</sup>c<sup>0</sup>)<sup>-2</sup>", options: ["b<sup>4</sup> / a<sup>8</sup>", "a<sup>8</sup> / b<sup>4</sup>", "b<sup>-4</sup> / a<sup>-8</sup>", "b<sup>4</sup> / (a<sup>8</sup>c<sup>2</sup>)"], correctAnswerIndex: 0 },
+                { question: "化簡 (m<sup>-4</sup>) / (m<sup>-5</sup>)", options: ["1/m", "m<sup>9</sup>", "m", "1/m<sup>9</sup>"], correctAnswerIndex: 2 },
+                { question: "化簡 (p<sup>2</sup>q<sup>-3</sup>)<sup>-2</sup> (p<sup>-1</sup>q<sup>2</sup>)", options: ["q<sup>8</sup> / p<sup>5</sup>", "q<sup>4</sup> / p<sup>5</sup>", "p<sup>5</sup> / q<sup>8</sup>", "p<sup>-5</sup>q<sup>8</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (a<sup>5</sup>b<sup>-3</sup>) / (a<sup>-2</sup>b<sup>-1</sup>)", options: ["a<sup>7</sup>b<sup>2</sup>", "a<sup>3</sup> / b<sup>2</sup>", "a<sup>7</sup> / b<sup>2</sup>", "a<sup>7</sup> / b<sup>4</sup>"], correctAnswerIndex: 2 },
+                { question: "化簡 (3x<sup>-2</sup>y)<sup>-1</sup>", options: ["x<sup>2</sup> / (3y)", "3x<sup>2</sup>y", "1 / (3x<sup>-2</sup>y)", "x<sup>2</sup>y / 3"], correctAnswerIndex: 0 },
+                { question: "化簡 (c<sup>-3</sup>d<sup>-4</sup>)<sup>-2</sup>", options: ["c<sup>6</sup>d<sup>8</sup>", "1 / (c<sup>6</sup>d<sup>8</sup>)", "c<sup>-6</sup>d<sup>-8</sup>", "c<sup>5</sup>d<sup>6</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (h<sup>-3</sup>k<sup>0</sup>) / (h<sup>-5</sup>k<sup>-1</sup>)", options: ["h<sup>2</sup> / k", "h<sup>2</sup>k", "k / h<sup>2</sup>", "h<sup>8</sup>k"], correctAnswerIndex: 1 },
+                { question: "化簡 (x<sup>1/2</sup>y<sup>-1</sup>)<sup>2</sup>", options: ["x / y<sup>2</sup>", "xy<sup>2</sup>", "x<sup>1/4</sup> / y", "x / y"], correctAnswerIndex: 0 },
+                { question: "化簡 (a<sup>-1</sup>b<sup>2</sup>c<sup>-3</sup>) / (a<sup>-2</sup>b<sup>-1</sup>c)", options: ["ab<sup>3</sup> / c<sup>4</sup>", "b / (ac<sup>2</sup>)", "ab<sup>3</sup> / c<sup>2</sup>", "ab / c<sup>4</sup>"], correctAnswerIndex: 0 },
+                // 21-25
+                { question: "化簡 (m<sup>-1</sup>n<sup>2</sup>)<sup>3</sup> (m<sup>4</sup>n<sup>-1</sup>)", options: ["mn<sup>5</sup>", "n<sup>5</sup> / m", "m<sup>7</sup>n<sup>5</sup>", "n<sup>5</sup> / m<sup>3</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (p<sup>-3</sup>q<sup>-2</sup>) / (p<sup>-1</sup>q<sup>-3</sup>)", options: ["q / p<sup>2</sup>", "p<sup>2</sup> / q", "q / p<sup>4</sup>", "p<sup>4</sup> / q"], correctAnswerIndex: 0 },
+                { question: "化簡 (4a<sup>-2</sup>)<sup>1/2</sup>", options: ["2 / a", "2a", "2 / a<sup>2</sup>", "4 / a"], correctAnswerIndex: 0 },
+                { question: "化簡 (a<sup>-2</sup>b<sup>3</sup>)<sup>-2</sup>", options: ["a<sup>4</sup> / b<sup>6</sup>", "b<sup>6</sup> / a<sup>4</sup>", "a<sup>-4</sup>b<sup>-6</sup>", "a<sup>4</sup> / b<sup>5</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (x<sup>-2</sup>y<sup>3</sup>z) / (x<sup>-3</sup>y<sup>-1</sup>z<sup>0</sup>)", options: ["xy<sup>4</sup>z", "y<sup>4</sup>z / x", "xy<sup>4</sup>", "xy<sup>2</sup>z"], correctAnswerIndex: 0 },
+            ],
+            '中級': [
+                // 1-10
+                { question: "化簡 (a<sup>-2</sup>b<sup>3</sup>)<sup>3</sup> / (a<sup>-3</sup>b<sup>5</sup>)", options: ["b<sup>4</sup> / a<sup>3</sup>", "a<sup>3</sup> / b<sup>4</sup>", "a<sup>-3</sup>b<sup>4</sup>", "b<sup>4</sup> / a<sup>9</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (x<sup>-1</sup>y<sup>4</sup>)<sup>-2</sup> (x<sup>3</sup>y<sup>-2</sup>)", options: ["x / y<sup>10</sup>", "x<sup>5</sup> / y<sup>10</sup>", "y<sup>10</sup> / x<sup>5</sup>", "x<sup>5</sup> / y<sup>6</sup>"], correctAnswerIndex: 1 },
+                { question: "化簡 ( (m<sup>-2</sup>n<sup>3</sup>)<sup>2</sup> ) / (m<sup>-5</sup>n<sup>-1</sup>)", options: ["mn<sup>7</sup>", "n<sup>7</sup> / m", "m<sup>9</sup>n<sup>7</sup>", "mn<sup>5</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (p<sup>4</sup>q<sup>-1</sup>)<sup>-1</sup> ) / (p<sup>-2</sup>q<sup>3</sup>)", options: ["1 / (p<sup>2</sup>q<sup>2</sup>)", "p<sup>6</sup> / q<sup>2</sup>", "p<sup>2</sup>q<sup>2</sup>", "q<sup>2</sup> / p<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (a<sup>1/2</sup>b<sup>-1</sup>)<sup>4</sup> (a<sup>-3</sup>)", options: ["b<sup>4</sup> / a", "a / b<sup>4</sup>", "1 / (ab<sup>4</sup>)", "a<sup>-1</sup>b<sup>-4</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (x<sup>-4</sup>y<sup>8</sup>)<sup>1/4</sup>", options: ["y<sup>2</sup> / x", "x / y<sup>2</sup>", "y<sup>2</sup> / x<sup>16</sup>", "y<sup>4</sup> / x"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (8a<sup>6</sup>) / (a<sup>-3</sup>) )<sup>1/3</sup>", options: ["2a<sup>3</sup>", "2a<sup>2</sup>", "2a<sup>1</sup>", "8a<sup>3</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (x<sup>-1</sup>y<sup>2</sup>z<sup>-3</sup>)<sup>-2</sup> / (x<sup>2</sup>y<sup>-1</sup>z<sup>7</sup>)", options: ["z / (y<sup>5</sup>)", "y<sup>5</sup> / z", "z<sup>-1</sup>y<sup>-5</sup>", "1 / (y<sup>5</sup>z)"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>-2</sup>b<sup>4</sup>) / (a<sup>4</sup>b<sup>-2</sup>) )<sup>1/2</sup>", options: ["b<sup>3</sup> / a<sup>3</sup>", "b / a", "a<sup>3</sup> / b<sup>3</sup>", "b<sup>3</sup> / a"], correctAnswerIndex: 0 },
+                { question: "化簡 (m<sup>3</sup>n<sup>-1</sup>)<sup>-2</sup> (m<sup>-1</sup>n<sup>5</sup>)<sup>-1</sup>", options: ["m<sup>-5</sup>n<sup>-3</sup>", "1 / (m<sup>5</sup>n<sup>3</sup>)", "m<sup>5</sup> / n<sup>3</sup>", "n<sup>3</sup> / m<sup>5</sup>"], correctAnswerIndex: 1 },
+                // 11-20
+                { question: "化簡 (p<sup>-1/2</sup>q<sup>-2</sup>)<sup>-4</sup>", options: ["p<sup>2</sup>q<sup>8</sup>", "q<sup>8</sup> / p<sup>2</sup>", "p<sup>-2</sup>q<sup>8</sup>", "p<sup>2</sup> / q<sup>8</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (a<sup>-3</sup>b<sup>2</sup>)<sup>-2</sup> / (a<sup>2</sup>b<sup>-1</sup>)<sup>3</sup>", options: ["ab", "1/ (a<sup>12</sup>b<sup>7</sup>)", "a<sup>12</sup>b<sup>7</sup>", "1 / (b<sup>7</sup>)"], correctAnswerIndex: 2 },
+                { question: "化簡 ( (x<sup>-2</sup>y<sup>5</sup>z) / (x<sup>-4</sup>y<sup>-1</sup>z<sup>3</sup>) )<sup>-1</sup>", options: ["z<sup>2</sup> / (x<sup>2</sup>y<sup>6</sup>)", "x<sup>2</sup>y<sup>6</sup> / z<sup>2</sup>", "z<sup>2</sup> / (x<sup>6</sup>y<sup>6</sup>)", "x<sup>2</sup>y<sup>6</sup>z<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>-1</sup>b<sup>-2</sup>c<sup>3</sup>)<sup>-2</sup> ) / (a<sup>4</sup>b<sup>-1</sup>c<sup>-5</sup>)", options: ["b<sup>5</sup> / (a<sup>2</sup>c)", "b<sup>5</sup>c / a<sup>2</sup>", "a<sup>2</sup>c / b<sup>5</sup>", "b<sup>3</sup> / (a<sup>2</sup>c)"], correctAnswerIndex: 0 },
+                { question: "化簡 (8m<sup>-3</sup>n<sup>6</sup>)<sup>1/3</sup>", options: ["2n<sup>2</sup> / m", "2m / n<sup>2</sup>", "2n<sup>2</sup> / m<sup>3</sup>", "2n<sup>3</sup> / m"], correctAnswerIndex: 0 },
+                { question: "化簡 (x<sup>-2/3</sup>y<sup>-1</sup>)<sup>-3</sup>", options: ["x<sup>2</sup>y<sup>3</sup>", "x<sup>2</sup> / y<sup>3</sup>", "y<sup>3</sup> / x<sup>2</sup>", "1 / (x<sup>2</sup>y<sup>3</sup>)"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>-3</sup>b<sup>4</sup>) / (a<sup>-1</sup>b<sup>-2</sup>) )<sup>-2</sup>", options: ["a<sup>4</sup> / b<sup>12</sup>", "b<sup>12</sup> / a<sup>4</sup>", "a<sup>4</sup> / b<sup>8</sup>", "a<sup>8</sup> / b<sup>12</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (p<sup>1/3</sup>q<sup>-2/3</sup>)<sup>-3</sup> (p<sup>-1</sup>q<sup>3</sup>)", options: ["q / p<sup>2</sup>", "q<sup>5</sup> / p<sup>2</sup>", "p<sup>2</sup>q<sup>5</sup>", "p<sup>2</sup> / q<sup>5</sup>"], correctAnswerIndex: 1 },
+                { question: "化簡 ( (4x<sup>-2</sup>) / (9y<sup>4</sup>) )<sup>-1/2</sup>", options: ["3xy<sup>2</sup> / 2", "2xy<sup>2</sup> / 3", "3y<sup>2</sup> / (2x)", "2y<sup>2</sup> / (3x)"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>-1</sup> + b<sup>-1</sup>) / (a<sup>-1</sup> - b<sup>-1</sup>) )", options: ["(a+b)/(a-b)", "(b+a)/(b-a)", "(b-a)/(b+a)", "1"], correctAnswerIndex: 1 },
+                // 21-25
+                { question: "化簡 ( (k<sup>-2</sup>h<sup>3</sup>)<sup>-1</sup> ) / (k<sup>-1</sup>h<sup>-2</sup>)", options: ["k<sup>3</sup> / h", "k / h<sup>5</sup>", "h / k<sup>3</sup>", "k<sup>3</sup> / h<sup>5</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (x<sup>-4</sup>y<sup>-2</sup>z<sup>0</sup>)<sup>-1/2</sup>", options: ["x<sup>2</sup>y", "xy<sup>2</sup>", "x<sup>2</sup>/y", "y/x<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (a<sup>-2</sup>b<sup>-1</sup>c<sup>3</sup>)<sup>-2</sup> (a<sup>-1</sup>b<sup>-2</sup>c<sup>-1</sup>)", options: ["a<sup>3</sup> / (b<sup>4</sup>c<sup>7</sup>)", "a<sup>3</sup>c<sup>7</sup> / b<sup>4</sup>", "a<sup>5</sup> / c<sup>7</sup>", "a<sup>3</sup> / c<sup>7</sup>"], correctAnswerIndex: 3 },
+                { question: "化簡 ( (m<sup>-2</sup>n<sup>3</sup>) / (m<sup>-1</sup>n<sup>-2</sup>) )<sup>-2</sup>", options: ["m<sup>2</sup> / n<sup>10</sup>", "n<sup>10</sup> / m<sup>2</sup>", "m<sup>6</sup> / n<sup>10</sup>", "m<sup>2</sup> / n<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 (p<sup>-1</sup>q<sup>2</sup>r<sup>-3</sup>)<sup>-2</sup>", options: ["p<sup>2</sup>r<sup>6</sup> / q<sup>4</sup>", "q<sup>4</sup>r<sup>6</sup> / p<sup>2</sup>", "p<sup>2</sup>q<sup>4</sup> / r<sup>6</sup>", "p<sup>2</sup> / (q<sup>4</sup>r<sup>6</sup>)"], correctAnswerIndex: 0 },
+            ],
+            '高級': [
+                // 1-10
+                { question: "化簡 (m<sup>9</sup>n<sup>-6</sup>)<sup>3</sup> (m<sup>-8</sup>n<sup>4</sup>)<sup>5</sup>", options: ["n<sup>2</sup> / m<sup>13</sup>", "m<sup>13</sup> / n<sup>2</sup>", "m<sup>-13</sup>n<sup>2</sup>", "m<sup>13</sup>n<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (pq<sup>3</sup>)<sup>4</sup> ) / (p<sup>6</sup>)", options: ["q<sup>12</sup> / p<sup>2</sup>", "p<sup>2</sup> / q<sup>12</sup>", "p<sup>10</sup>q<sup>12</sup>", "q<sup>7</sup> / p<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>2</sup>b<sup>-3</sup>)<sup>5</sup> ) / ( (a<sup>-4</sup>)<sup>2</sup> )", options: ["a<sup>18</sup> / b<sup>15</sup>", "b<sup>15</sup> / a<sup>18</sup>", "a<sup>2</sup> / b<sup>15</sup>", "a<sup>18</sup>b<sup>15</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( a<sup>7</sup> ) / ( (a<sup>4</sup>b<sup>-6</sup>)<sup>5</sup> )", options: ["b<sup>30</sup> / a<sup>13</sup>", "a<sup>13</sup> / b<sup>30</sup>", "a<sup>27</sup>b<sup>30</sup>", "b<sup>30</sup> / a<sup>27</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (x<sup>25</sup>y<sup>-30</sup>) / ( (x<sup>6</sup>y<sup>3</sup>)<sup>7</sup> ) )", options: ["y<sup>51</sup> / x<sup>17</sup>", "x<sup>17</sup> / y<sup>51</sup>", "x<sup>17</sup>y<sup>51</sup>", "y<sup>9</sup> / x<sup>17</sup>"], correctAnswerIndex: 1 },
+                { question: "化簡 ( (p<sup>3</sup>q<sup>-4</sup>)<sup>6</sup> ) / ( p<sup>-12</sup>q<sup>10</sup> )", options: ["p<sup>30</sup> / q<sup>34</sup>", "q<sup>34</sup> / p<sup>30</sup>", "p<sup>6</sup> / q<sup>34</sup>", "p<sup>30</sup> / q<sup>14</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (pq<sup>-5</sup>)<sup>2</sup> ) / ( p<sup>2</sup>q<sup>-3</sup> )", options: ["1 / q<sup>7</sup>", "q<sup>7</sup>", "q<sup>13</sup> / p<sup>4</sup>", "p<sup>4</sup> / q<sup>13</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>15</sup>b<sup>11</sup>) / ( (a<sup>-2</sup>b<sup>3</sup>)<sup>-2</sup> ) )", options: ["a<sup>11</sup>b<sup>17</sup>", "a<sup>19</sup>b<sup>17</sup>", "a<sup>11</sup>b<sup>5</sup>", "a<sup>11</sup> / b<sup>5</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>6</sup>b<sup>-2</sup>)<sup>3</sup> ) / ( (a<sup>-3</sup>)<sup>4</sup> )", options: ["a<sup>30</sup> / b<sup>6</sup>", "b<sup>6</sup> / a<sup>30</sup>", "a<sup>6</sup> / b<sup>6</sup>", "a<sup>30</sup>b<sup>6</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>2</sup>b<sup>6</sup>) / ( (a<sup>-1</sup>b<sup>4</sup>)<sup>2</sup> ) )", options: ["a<sup>4</sup> / b<sup>2</sup>", "b<sup>2</sup> / a<sup>4</sup>", "a<sup>4</sup>b<sup>2</sup>", "1 / (a<sup>4</sup>b<sup>2</sup>)"], correctAnswerIndex: 0 },
+                // 11-20
+                { question: "化簡 (ab<sup>2</sup>)(a<sup>-4</sup>b<sup>-1</sup>)<sup>3</sup>", options: ["1 / (a<sup>11</sup>b)", "a<sup>11</sup>b", "a<sup>13</sup>b", "b / a<sup>11</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( ab<sup>9</sup> ) / ( (a<sup>7</sup>b<sup>-2</sup>)<sup>-4</sup> )", options: ["a<sup>29</sup>b", "b / a<sup>29</sup>", "a<sup>27</sup>b", "a<sup>29</sup>b<sup>17</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (4m<sup>-2</sup>n<sup>4</sup>) / (m<sup>-1</sup>n<sup>-2</sup>) )<sup>-2</sup>", options: ["m<sup>2</sup> / (16n<sup>12</sup>)", "16n<sup>12</sup> / m<sup>2</sup>", "m<sup>6</sup> / (16n<sup>12</sup>)", "m<sup>2</sup> / (16n<sup>4</sup>)"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (x<sup>-1</sup>y<sup>2</sup>)<sup>3</sup> (x<sup>2</sup>y<sup>-3</sup>)<sup>-1</sup> ) / (x<sup>-5</sup>y<sup>10</sup>)", options: ["1 / y", "y", "1 / (y x<sup>10</sup>)", "x<sup>10</sup> / y"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>-2</sup>b<sup>3</sup>c)<sup>-2</sup> ) / ( (a<sup>3</sup>b<sup>-1</sup>c<sup>-2</sup>)<sup>-1</sup> )", options: ["a / (b<sup>7</sup>c<sup>4</sup>)", "a<sup>7</sup>b<sup>7</sup>c<sup>4</sup>", "a / b<sup>7</sup>", "a / (b<sup>5</sup>c<sup>4</sup>)"], correctAnswerIndex: 2 },
+                { question: "化簡 ( (p<sup>-1</sup> + q<sup>-1</sup>) / (p<sup>-2</sup> - q<sup>-2</sup>) )", options: ["pq(q+p) / (q<sup>2</sup>-p<sup>2</sup>)", "pq / (q-p)", "(q-p) / pq", "(q+p) / (q-p)"], correctAnswerIndex: 1 },
+                { question: "化簡 ( (16a<sup>-4</sup>b<sup>8</sup>) / (c<sup>-12</sup>) )<sup>-1/4</sup>", options: ["a / (2b<sup>2</sup>c<sup>3</sup>)", "2b<sup>2</sup>c<sup>3</sup> / a", "a / (2b<sup>2</sup>c<sup>-3</sup>)", "a / (16b<sup>2</sup>c<sup>3</sup>)"], correctAnswerIndex: 0 },
+                { question: "化簡 (x<sup>-3</sup>y<sup>2</sup>)<sup>-4</sup> (x<sup>-2</sup>y<sup>-5</sup>)<sup>-3</sup>", options: ["x<sup>18</sup>y<sup>7</sup>", "x<sup>18</sup> / y<sup>7</sup>", "y<sup>7</sup> / x<sup>18</sup>", "x<sup>6</sup>y<sup>7</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (m<sup>-2</sup>n<sup>4</sup>)<sup>1/2</sup> ) / ( (m<sup>-3</sup>n<sup>6</sup>)<sup>1/3</sup> )", options: ["n", "m", "1", "1/m"], correctAnswerIndex: 2 },
+                { question: "化簡 ( (a<sup>-3</sup>b<sup>2</sup>c<sup>-1</sup>) / (a<sup>-1</sup>b<sup>-3</sup>c<sup>-2</sup>) )<sup>-2</sup>", options: ["a<sup>4</sup> / (b<sup>10</sup>c<sup>2</sup>)", "b<sup>10</sup>c<sup>2</sup> / a<sup>4</sup>", "a<sup>4</sup> / (b<sup>10</sup>c)", "a<sup>4</sup> / (b<sup>2</sup>c<sup>2</sup>)"], correctAnswerIndex: 0 },
+                // 21-25
+                { question: "化簡 ( (x<sup>-2</sup>y<sup>4</sup>)<sup>-3</sup> ) / ( (x<sup>3</sup>y<sup>-5</sup>)<sup>-2</sup> )", options: ["x<sup>12</sup>y<sup>2</sup>", "1 / (x<sup>12</sup>y<sup>2</sup>)", "y<sup>2</sup> / x<sup>12</sup>", "x<sup>12</sup> / y<sup>2</sup>"], correctAnswerIndex: 3 },
+                { question: "化簡 ( (a<sup>-1</sup>b<sup>2</sup>) / (a<sup>-3</sup>b<sup>-1</sup>) )<sup>-1/2</sup>", options: ["1 / (ab<sup>3/2</sup>)", "ab<sup>3/2</sup>", "1 / (a<sup>2</sup>b<sup>3/2</sup>)", "1 / (ab<sup>3</sup>)"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (p<sup>-3</sup>q<sup>2</sup>)<sup>2</sup> (p<sup>4</sup>q<sup>-1</sup>)<sup>3</sup> ) / ( (pq)<sup>-1</sup> )", options: ["p<sup>7</sup>q<sup>2</sup>", "p<sup>5</sup>q<sup>2</sup>", "p<sup>7</sup>q", "p<sup>7</sup>"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (8x<sup>-3</sup>y<sup>6</sup>)<sup>-1/3</sup> ) / ( (x<sup>2</sup>y<sup>-1</sup>)<sup>-1</sup> )", options: ["1 / (2y)", "y / 2", "x / (2y)", "1 / (2xy)"], correctAnswerIndex: 0 },
+                { question: "化簡 ( (a<sup>n-1</sup> b<sup>2n</sup>) / (a<sup>-n</sup> b<sup>n+1</sup>) )<sup>2</sup>", options: ["a<sup>4n-2</sup>b<sup>2n-2</sup>", "a<sup>4n-2</sup>b<sup>2n+2</sup>", "a<sup>2n-2</sup>b<sup>2n-2</sup>", "a<sup>4n+2</sup>b<sup>2n-2</sup>"], correctAnswerIndex: 0 },
+            ]
+        };
+
+        // --- 應用程式狀態 ---
+        let currentDifficulty = '初級';
+        let sessionQuestions = [];
+        let currentQuestionIndex = 0;
+        let sessionScore = 0;
+
+        // --- DOM 元素參照 ---
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const summaryScreen = document.getElementById('summary-screen');
+
+        const startButton = document.getElementById('start-button');
+        const nextButton = document.getElementById('next-button');
+        const nextSessionButton = document.getElementById('next-session-button');
+
+        const difficultyDisplay = document.getElementById('difficulty-display');
+        const startDifficultyLabel = document.getElementById('start-difficulty-label');
+
+        const questionCounter = document.getElementById('question-counter');
+        const currentScore = document.getElementById('current-score');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        // --- 新增元素參考 ---
+        const feedbackContainer = document.getElementById('feedback-container');
+        const correctAnswerText = document.getElementById('correct-answer-text');
+        const answerStatus = document.getElementById('answer-status'); // 新增
+        // --- 結束新增 ---
+        
+        const summaryText = document.getElementById('summary-text');
+        const assessmentText = document.getElementById('assessment-text');
+        const assessmentFeedback = document.getElementById('assessment-feedback');
+
+
+        // --- 事件監聽 ---
+        startButton.addEventListener('click', startSession);
+        nextButton.addEventListener('click', loadNextQuestion);
+        nextSessionButton.addEventListener('click', startSession);
+        optionsContainer.addEventListener('click', handleAnswer);
+
+        // --- 核心函式 ---
+
+        /**
+         * Fisher-Yates (aka Knuth) Shuffle
+         * 用於隨機打亂陣列
+         */
+        function shuffleArray(array) {
+            let currentIndex = array.length,  randomIndex;
+
+            // While there remain elements to shuffle.
+            while (currentIndex != 0) {
+                // Pick a remaining element.
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+
+                // And swap it with the current element.
+                [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        /**
+         * 1. 開始新一輪測驗
+         */
+        function startSession() {
+            // 重設狀態
+            sessionScore = 0;
+            currentQuestionIndex = 0;
+            sessionQuestions = [];
+
+            // 根據目前難度獲取 5 道題目
+            const availableQuestions = [...questionBank[currentDifficulty]];
+            sessionQuestions = shuffleArray(availableQuestions).slice(0, 5);
+            
+            // 更新 UI
+            difficultyDisplay.textContent = `目前難度：${currentDifficulty}`;
+            startDifficultyLabel.textContent = currentDifficulty;
+            currentScore.textContent = `目前得分：0`;
+
+            // 切換畫面
+            startScreen.classList.add('hidden');
+            summaryScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+
+            // 載入第一題
+            displayQuestion();
+        }
+
+        /**
+         * 2. 顯示目前題目
+         */
+        function displayQuestion() {
+            // 獲取目前題目
+            const question = sessionQuestions[currentQuestionIndex];
+            
+            // 更新題目文字 (使用 innerHTML 來渲染 <sup>)
+            questionText.innerHTML = question.question;
+
+            // 清空舊選項
+            optionsContainer.innerHTML = '';
+
+            // 生成新選項按鈕
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.classList.add('option-btn');
+                button.dataset.index = index;
+                button.innerHTML = option; // 使用 innerHTML
+                optionsContainer.appendChild(button);
+            });
+
+            // 更新進度
+            questionCounter.textContent = `題目 ${currentQuestionIndex + 1} / 5`;
+            
+            // 隱藏「下一題」按鈕
+            nextButton.classList.add('hidden');
+            // 隱藏反饋
+            feedbackContainer.classList.add('hidden');
+            correctAnswerText.innerHTML = '';
+            answerStatus.classList.add('hidden'); // 新增
+            answerStatus.textContent = ''; // 新增
+        }
+
+        /**
+         * 3. 處理使用者作答
+         */
+        function handleAnswer(e) {
+            // 確保點擊的是按鈕本身
+            const selectedButton = e.target.closest('.option-btn');
+            if (!selectedButton) return;
+
+            const selectedAnswerIndex = parseInt(selectedButton.dataset.index);
+            // --- 獲取完整題目物件 ---
+            const question = sessionQuestions[currentQuestionIndex];
+            const correctAnwserIndex = question.correctAnswerIndex;
+            const correctAnswerString = question.options[correctAnwserIndex]; // 獲取正確答案的文字
+            // --- 結束 ---
+
+            // 停用所有選項按鈕
+            Array.from(optionsContainer.children).forEach(button => {
+                button.disabled = true;
+                // 移除 hover 效果
+                button.classList.remove('option-btn:hover'); 
+            });
+
+            // 檢查答案
+            if (selectedAnswerIndex === correctAnwserIndex) {
+                // 答對
+                sessionScore++;
+                selectedButton.classList.add('correct');
+                // --- 顯示對/錯反饋 ---
+                answerStatus.textContent = '答對了！';
+                answerStatus.className = 'mt-6 text-xl font-bold text-green-600';
+                answerStatus.classList.remove('hidden');
+                // --- 結束 ---
+            } else {
+                // 答錯
+                selectedButton.classList.add('wrong');
+                // 顯示正確答案
+                const correctButton = optionsContainer.querySelector(`[data-index="${correctAnwserIndex}"]`);
+                if (correctButton) {
+                    correctButton.classList.add('correct');
+                }
+                // --- 顯示對/錯反饋 ---
+                answerStatus.textContent = '答錯了';
+                answerStatus.className = 'mt-6 text-xl font-bold text-red-600';
+                answerStatus.classList.remove('hidden');
+                // --- 結束 ---
+            }
+
+            // --- 顯示正確答案文字框 ---
+            correctAnswerText.innerHTML = correctAnswerString;
+            feedbackContainer.classList.remove('hidden');
+            // --- 結束顯示 ---
+
+            // 顯示「下一題」按鈕
+            nextButton.classList.remove('hidden');
+            
+            // 更新即時分數
+            currentScore.textContent = `目前得分：${sessionScore}`;
+        }
+
+        /**
+         * 4. 載入下一題或結束
+         */
+        function loadNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < 5) {
+                // 還有題目，顯示下一題
+                displayQuestion();
+            } else {
+                // 5 題結束，顯示總結
+                showSummary();
+            }
+        }
+
+        /**
+         * 5. 顯示總結與評估
+         */
+        function showSummary() {
+            // 切換畫面
+            quizScreen.classList.add('hidden');
+            summaryScreen.classList.remove('hidden');
+
+            // 顯示總分
+            summaryText.textContent = `您在 5 題中答對了 ${sessionScore} 題。`;
+
+            // 難度調整邏輯
+            let assessmentMsg = "";
+            if (sessionScore <= 1) {
+                // 0-1 題：保持初級 (或從中級降回初級)
+                currentDifficulty = '初級';
+                assessmentMsg = "看來基礎還需要加強，我們將繼續停在【初級】練習。";
+                assessmentFeedback.className = "mb-6 p-4 bg-red-50 border border-red-200 rounded-lg";
+                assessmentText.className = "text-red-800 font-medium";
+            } else if (sessionScore <= 3) {
+                // 2-3 題：調整為中級
+                currentDifficulty = '中級';
+                assessmentMsg = "表現不錯！我們準備好進入【中級】難度了。";
+                assessmentFeedback.className = "mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg";
+                assessmentText.className = "text-yellow-800 font-medium";
+            } else {
+                // 4-5 題：調整為高級
+                currentDifficulty = '高級';
+                assessmentMsg = "太棒了！您已精通這個級別，準備挑戰【高級】難度吧！";
+                assessmentFeedback.className = "mb-6 p-4 bg-green-50 border border-green-200 rounded-lg";
+                assessmentText.className = "text-green-800 font-medium";
+            }
+
+            // 更新評估文字和下一輪的難度提示
+            assessmentText.textContent = assessmentMsg;
+            nextSessionButton.textContent = `開始下一輪 (${currentDifficulty})`;
+            
+            // 同步更新開始畫面的難度提示
+            difficultyDisplay.textContent = `目前難度：${currentDifficulty}`;
+            startDifficultyLabel.textContent = currentDifficulty;
+        }
+
+    </script>
+</body>
+</html>

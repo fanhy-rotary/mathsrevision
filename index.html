@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 適性學習測驗 - 指數</title>
+    <title>AI 適性學習測驗</title>
     <!-- 引入 Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -20,6 +20,14 @@
         .primary-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 主題選擇按鈕樣式 */
+        .topic-btn {
+            @apply w-full p-6 text-left bg-white rounded-lg shadow-md border border-gray-200 transition-all duration-200 ease-in-out;
+        }
+        .topic-btn:hover {
+            @apply transform -translate-y-1 shadow-lg border-blue-500;
         }
 
         /* 選項按鈕樣式 */
@@ -58,6 +66,11 @@
             color: #c53030; /* red-800 */
             font-weight: 700;
         }
+
+        /* 次要按鈕 (例如返回) */
+        .secondary-btn {
+            @apply w-full mt-4 text-center text-gray-600 font-medium py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors duration-200;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
@@ -66,9 +79,9 @@
         
         <!-- 頂部標題和難度顯示 -->
         <header class="mb-6 text-center">
-            <h1 class="text-3xl font-bold text-gray-800">數學適性學習</h1>
-            <p class="text-lg text-gray-600">主題：指數 (Indices)</p>
-            <div id="difficulty-display" class="mt-4 inline-block bg-blue-100 text-blue-800 text-sm font-semibold px-4 py-2 rounded-full">
+            <h1 id="app-title" class="text-3xl font-bold text-gray-800">數學適性學習</h1>
+            <p id="app-subtitle" class="text-lg text-gray-600">請選擇一個練習主題</p>
+            <div id="difficulty-display" class="mt-4 inline-block bg-blue-100 text-blue-800 text-sm font-semibold px-4 py-2 rounded-full hidden">
                 目前難度：初級
             </div>
         </header>
@@ -76,12 +89,30 @@
         <!-- 主內容區域 -->
         <main id="app-container" class="bg-white p-6 sm:p-8 rounded-xl shadow-lg">
 
-            <!-- 1. 開始畫面 (預設顯示) -->
-            <div id="start-screen" class="">
+            <!-- 0. 主題選擇畫面 (新加入，預設顯示) -->
+            <div id="topic-screen">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6 text-center">選擇練習主題</h2>
+                <div class="space-y-4">
+                    <button id="select-topic-indices" data-topic="指數" class="topic-btn group">
+                        <h3 class="text-xl font-bold text-blue-700 group-hover:text-blue-600">指數 (Indices)</h3>
+                        <p class="text-gray-600 mt-1">練習指數定律，包括正負指數、分數指數和化簡。</p>
+                    </button>
+                    <button id="select-topic-factorization" data-topic="因式分解" class="topic-btn group">
+                        <h3 class="text-xl font-bold text-green-700 group-hover:text-green-600">因式分解 (Factorization)</h3>
+                        <p class="text-gray-600 mt-1">練習提取公因式、十字相乘、恆等式和分組法。</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 1. 開始畫面 (預設隱藏) -->
+            <div id="start-screen" class="hidden">
                 <h2 class="text-2xl font-semibold text-gray-700 mb-4">準備好開始了嗎？</h2>
                 <p class="text-gray-600 mb-6">點擊按鈕，系統將根據您目前的難度「<span id="start-difficulty-label" class="font-bold">初級</span>」，隨機抽取 5 道題目。</p>
                 <button id="start-button" class="w-full primary-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
                     開始測驗
+                </button>
+                <button id="back-to-topic-select" class="secondary-btn">
+                    返回主題選擇
                 </button>
             </div>
 
@@ -92,7 +123,7 @@
                     <span id="question-counter" class="text-sm font-medium text-gray-600">題目 1 / 5</span>
                     <span id="current-score" class="text-sm font-medium text-blue-600">目前得分：0</span>
                 </div>
-
+                
                 <!-- 題目內容 -->
                 <div class="mb-6">
                     <p id="question-text" class="text-xl font-semibold text-gray-800 leading-relaxed" style="min-height: 4rem;">
@@ -105,12 +136,12 @@
                     <!-- 選項將由 JS 動態生成 (使用 innerHTML) -->
                 </div>
 
-                <!-- 對/錯 反饋 (新加入) -->
+                <!-- 對/錯 反饋 -->
                 <div id="answer-status" class="hidden mt-6 text-xl font-bold">
                     <!-- JS 將會設定文字和顏色 -->
                 </div>
 
-                <!-- 正確答案反饋 (修改 mt-4 為 mt-2) -->
+                <!-- 正確答案反饋 -->
                 <div id="feedback-container" class="hidden mt-2 p-4 rounded-lg bg-green-50 border border-green-200">
                     <p class="font-semibold text-green-800">正確答案：</p>
                     <p id="correct-answer-text" class="text-green-700"></p>
@@ -119,6 +150,10 @@
                 <!-- 下一題按鈕 (預設隱藏) -->
                 <button id="next-button" class="w-full mt-8 primary-btn bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 hidden">
                     下一題
+                </button>
+                
+                <button id="quiz-change-topic-btn" class="secondary-btn">
+                    放棄本輪並返回主題選擇
                 </button>
             </div>
 
@@ -132,6 +167,9 @@
                 <button id="next-session-button" class="w-full primary-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
                     開始下一輪
                 </button>
+                <button id="summary-change-topic-btn" class="secondary-btn">
+                    返回主題選擇
+                </button>
             </div>
 
         </main>
@@ -139,8 +177,9 @@
 
     <script>
         // --- 靜態題庫 ---
-        // 難度：HKDSE，所有答案均為正指數
-        const questionBank = {
+
+        // 題庫 1: 指數
+        const indicesQuestionBank = {
             '初級': [
                 // 1-10
                 { question: "化簡 (a<sup>3</sup>b<sup>-2</sup>)<sup>-1</sup>", options: ["a<sup>3</sup>b<sup>2</sup>", "1 / (a<sup>3</sup>b<sup>2</sup>)", "b<sup>2</sup> / a<sup>3</sup>", "a<sup>-3</sup>b<sup>2</sup>"], correctAnswerIndex: 2 },
@@ -233,21 +272,133 @@
             ]
         };
 
+        // 題庫 2: 因式分解 (新)
+        const factorizationQuestionBank = {
+            '初級': [
+                // 1-10 (Common Factor & Difference of Squares)
+                { question: "因式分解 3x<sup>2</sup> + 6xy", options: ["3x(x + 2y)", "3x(x + 6y)", "x(3x + 6y)", "3(x<sup>2</sup> + 2xy)"], correctAnswerIndex: 0 },
+                { question: "因式分解 a<sup>2</sup> - 16", options: ["(a - 4)<sup>2</sup>", "(a - 4)(a + 4)", "(a - 8)(a + 2)", "(a + 4)<sup>2</sup>"], correctAnswerIndex: 1 },
+                { question: "因式分解 5ab<sup>2</sup> - 10a<sup>2</sup>b", options: ["5ab(b - 2a)", "5ab(b - 10a)", "5a(b<sup>2</sup> - 2ab)", "ab(5b - 10a)"], correctAnswerIndex: 0 },
+                { question: "因式分解 9p<sup>2</sup> - 1", options: ["(9p - 1)(p + 1)", "(3p - 1)(3p + 1)", "(3p - 1)<sup>2</sup>", "(9p - 1)(9p + 1)"], correctAnswerIndex: 1 },
+                { question: "因式分解 x(a + b) + y(a + b)", options: ["(x + y)(a + b)", "(x + a)(y + b)", "xy(a + b)", "(xy)(a + b)<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "因式分解 4m<sup>2</sup> - 25n<sup>2</sup>", options: ["(4m - 25n)(m + n)", "(2m - 5n)<sup>2</sup>", "(2m - 5n)(2m + 5n)", "(2m + 5n)<sup>2</sup>"], correctAnswerIndex: 2 },
+                { question: "因式分解 2a<sup>2</sup> + 4ab + 6ac", options: ["2a(a + 2b + 3c)", "2(a<sup>2</sup> + 2ab + 3ac)", "a(2a + 4b + 6c)", "2a(a + 2b + 6c)"], correctAnswerIndex: 0 },
+                { question: "因式分解 1 - 64y<sup>2</sup>", options: ["(1 - 32y)(1 + 32y)", "(1 - 8y)<sup>2</sup>", "(1 - 8y)(1 + 8y)", "(1 + 8y)<sup>2</sup>"], correctAnswerIndex: 2 },
+                { question: "因式分解 p<sup>2</sup>q - pq<sup>2</sup>", options: ["p(pq - q<sup>2</sup>)", "q(p<sup>2</sup> - pq)", "pq(p - q)", "pq(p + q)"], correctAnswerIndex: 2 },
+                { question: "因式分解 (x + y)<sup>2</sup> - 9", options: ["(x + y - 3)(x + y + 3)", "(x + y - 3)<sup>2</sup>", "(x + y - 9)(x + y + 9)", "(x + y - 1)(x + y + 9)"], correctAnswerIndex: 0 },
+                // 11-20 (Perfect Squares & Simple Grouping)
+                { question: "因式分解 x<sup>2</sup> + 6x + 9", options: ["(x + 3)<sup>2</sup>", "(x + 3)(x - 3)", "(x + 6)(x + 3)", "(x + 9)(x + 1)"], correctAnswerIndex: 0 },
+                { question: "因式分解 a<sup>2</sup> - 10a + 25", options: ["(a - 5)(a + 5)", "(a - 10)(a - 15)", "(a - 5)<sup>2</sup>", "(a + 5)<sup>2</sup>"], correctAnswerIndex: 2 },
+                { question: "因式分解 4y<sup>2</sup> + 4y + 1", options: ["(4y + 1)<sup>2</sup>", "(2y + 1)(2y - 1)", "(2y + 1)<sup>2</sup>", "(2y - 1)<sup>2</sup>"], correctAnswerIndex: 2 },
+                { question: "因式分解 9k<sup>2</sup> - 12k + 4", options: ["(3k - 2)<sup>2</sup>", "(3k + 2)<sup>2</sup>", "(3k - 2)(3k + 2)", "(9k - 4)(k - 1)"], correctAnswerIndex: 0 },
+                { question: "因式分解 ax + ay + bx + by", options: ["(a + b)(x + y)", "(a + x)(b + y)", "ab(x + y)", "xy(a + b)"], correctAnswerIndex: 0 },
+                { question: "因式分解 pm - pn - qm + qn", options: ["(p - q)(m - n)", "(p + q)(m - n)", "(p - q)(m + n)", "(p + q)(m + n)"], correctAnswerIndex: 0 },
+                { question: "因式分解 x<sup>2</sup> + 2xy + y<sup>2</sup>", options: ["(x + y)<sup>2</sup>", "(x - y)<sup>2</sup>", "(x + y)(x - y)", "x(x + 2y) + y<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "因式分解 m<sup>2</sup> - 16m + 64", options: ["(m + 8)<sup>2</sup>", "(m - 8)(m + 8)", "(m - 64)(m - 1)", "(m - 8)<sup>2</sup>"], correctAnswerIndex: 3 },
+                { question: "因式分解 2x + 2y + ax + ay", options: ["2(x + y) + a(x + y)", "(2 + a)(x + y)", "2a(x + y)", "(2 + x)(a + y)"], correctAnswerIndex: 1 },
+                { question: "因式分解 h<sup>2</sup>k - h<sup>2</sup> - k + 1", options: ["(h<sup>2</sup> - 1)(k - 1)", "h<sup>2</sup>(k - 1) + (k - 1)", "(h - 1)(h + 1)(k - 1)", "(h<sup>2</sup> + 1)(k - 1)"], correctAnswerIndex: 0 },
+                // 21-25 (Mixed Simple)
+                { question: "因式分解 3a<sup>2</sup> - 27", options: ["3(a - 3)<sup>2</sup>", "3(a + 3)<sup>2</sup>", "3(a - 3)(a + 3)", "3(a - 9)(a + 3)"], correctAnswerIndex: 2 },
+                { question: "因式分解 2x<sup>2</sup> + 8x + 8", options: ["2(x + 2)<sup>2</sup>", "2(x + 4)<sup>2</sup>", "2(x + 2)(x - 2)", "(2x + 4)<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "因式分解 5p<sup>2</sup> - 5", options: ["5(p - 1)<sup>2</sup>", "5(p - 1)(p + 1)", "5p(p - 1)", "5(p<sup>2</sup> - 1)"], correctAnswerIndex: 1 },
+                { question: "因式分解 x<sup>2</sup> - y<sup>2</sup> + 2x - 2y", options: ["(x - y)(x + y + 2)", "(x + y)(x - y + 2)", "(x - y)(x - y + 2)", "(x - y)(x + y - 2)"], correctAnswerIndex: 0 },
+                { question: "因式分解 a<sup>3</sup> - a", options: ["a(a<sup>2</sup> - 1)", "a(a - 1)(a + 1)", "a(a - 1)<sup>2</sup>", "a(a + 1)<sup>2</sup>"], correctAnswerIndex: 1 },
+            ],
+            '中級': [
+                // 1-10 (Cross-method x^2+bx+c)
+                { question: "因式分解 x<sup>2</sup> + 7x + 10", options: ["(x + 2)(x + 5)", "(x + 1)(x + 10)", "(x - 2)(x - 5)", "(x + 7)(x + 10)"], correctAnswerIndex: 0 },
+                { question: "因式分解 a<sup>2</sup> - 5a + 6", options: ["(a - 2)(a - 3)", "(a + 2)(a + 3)", "(a - 6)(a + 1)", "(a - 6)(a - 1)"], correctAnswerIndex: 0 },
+                { question: "因式分解 y<sup>2</sup> - 2y - 8", options: ["(y - 2)(y + 4)", "(y + 2)(y - 4)", "(y - 8)(y + 1)", "(y - 2)(y - 4)"], correctAnswerIndex: 1 },
+                { question: "因式分解 k<sup>2</sup> + k - 12", options: ["(k + 3)(k - 4)", "(k - 3)(k + 4)", "(k + 6)(k - 2)", "(k - 6)(k + 2)"], correctAnswerIndex: 1 },
+                { question: "因式分解 m<sup>2</sup> + 7mn + 10n<sup>2</sup>", options: ["(m + 2n)(m + 5n)", "(m + n)(m + 10n)", "(m - 2n)(m - 5n)", "(m + 2n)(m - 5n)"], correctAnswerIndex: 0 },
+                { question: "因式分解 p<sup>2</sup> - 5pq + 6q<sup>2</sup>", options: ["(p - 2q)(p + 3q)", "(p + 2q)(p + 3q)", "(p - 2q)(p - 3q)", "(p - 6q)(p + q)"], correctAnswerIndex: 2 },
+                { question: "因式分解 x<sup>2</sup> + 2xy - 8y<sup>2</sup>", options: ["(x + 4y)(x - 2y)", "(x - 4y)(x + 2y)", "(x - 8y)(x + y)", "(x + 8y)(x - y)"], correctAnswerIndex: 0 },
+                { question: "因式分解 a<sup>2</sup> - ab - 12b<sup>2</sup>", options: ["(a - 3b)(a + 4b)", "(a + 3b)(a + 4b)", "(a - 6b)(a + 2b)", "(a + 3b)(a - 4b)"], correctAnswerIndex: 3 },
+                { question: "因式分解 3x<sup>2</sup> + 15x + 18", options: ["3(x + 2)(x + 3)", "3(x + 6)(x + 1)", "(3x + 6)(x + 3)", "3(x - 2)(x - 3)"], correctAnswerIndex: 0 },
+                { question: "因式分解 2y<sup>2</sup> - 4y - 16", options: ["2(y + 2)(y - 4)", "2(y - 2)(y + 4)", "(2y - 4)(y + 4)", "2(y - 8)(y + 1)"], correctAnswerIndex: 0 },
+                // 11-20 (Cross-method ax^2+bx+c)
+                { question: "因式分解 2x<sup>2</sup> + 5x + 3", options: ["(2x + 3)(x + 1)", "(2x + 1)(x + 3)", "(2x + 5)(x + 1)", "(2x - 3)(x - 1)"], correctAnswerIndex: 0 },
+                { question: "因式分解 3a<sup>2</sup> - 7a + 2", options: ["(3a - 1)(a - 2)", "(3a + 1)(a + 2)", "(3a - 2)(a - 1)", "(3a - 7)(a - 1)"], correctAnswerIndex: 0 },
+                { question: "因式分解 5y<sup>2</sup> + 8y - 4", options: ["(5y + 2)(y - 2)", "(5y - 2)(y + 2)", "(5y - 4)(y + 1)", "(5y + 4)(y - 1)"], correctAnswerIndex: 1 },
+                { question: "因式分解 6k<sup>2</sup> - k - 2", options: ["(3k - 2)(2k + 1)", "(3k + 2)(2k - 1)", "(6k - 1)(k + 2)", "(6k + 2)(k - 1)"], correctAnswerIndex: 0 },
+                { question: "因式分解 4m<sup>2</sup> + 11m - 3", options: ["(4m + 1)(m - 3)", "(4m - 1)(m + 3)", "(2m - 1)(2m + 3)", "(4m + 3)(m - 1)"], correctAnswerIndex: 1 },
+                { question: "因式分解 2p<sup>2</sup> - 3pq - 2q<sup>2</sup>", options: ["(2p + 1q)(p - 2q)", "(2p - 1q)(p + 2q)", "(2p + q)(p - 2q)", "(2p - q)(p - 2q)"], correctAnswerIndex: 2 },
+                { question: "因式分解 5x<sup>2</sup> + 7xy - 6y<sup>2</sup>", options: ["(5x - 3y)(x + 2y)", "(5x + 3y)(x - 2y)", "(5x - 6y)(x + y)", "(5x + 2y)(x - 3y)"], correctAnswerIndex: 0 },
+                { question: "因式分解 10a<sup>2</sup> - 19a + 6", options: ["(5a - 2)(2a - 3)", "(5a + 2)(2a + 3)", "(10a - 3)(a - 2)", "(10a - 1)(a - 6)"], correctAnswerIndex: 0 },
+                { question: "因式分解 8x<sup>2</sup> + 2xy - 15y<sup>2</sup>", options: ["(4x + 3y)(2x - 5y)", "(4x - 5y)(2x + 3y)", "(8x - 15y)(x + y)", "(4x - 3y)(2x + 5y)"], correctAnswerIndex: 1 },
+                { question: "因式分解 6 - 5a - a<sup>2</sup>", options: ["(6 + a)(1 - a)", "(6 - a)(1 + a)", "(3 - a)(2 + a)", "(3 + a)(2 - a)"], correctAnswerIndex: 0 },
+                // 21-25 (Simple (a)/(b) type)
+                { question: "(a) 因式分解 x<sup>2</sup> - 9。<br>(b) 由此，因式分解 x<sup>2</sup> - 9 + xy - 3y。", options: ["(x - 3)(x + 3 + y)", "(x + 3)(x - 3 + y)", "(x - 3)(x - 3 + y)", "(x + 3)(x + 3 + y)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 a<sup>2</sup> + 4a + 4。<br>(b) 由此，因式分解 a<sup>2</sup> + 4a + 4 - b<sup>2</sup>。", options: ["(a + 2 - b)(a + 2 + b)", "(a + 2 - b)<sup>2</sup>", "(a - 2 - b)(a - 2 + b)", "(a + 2 + b)<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 4m - 8n。<br>(b) 由此，因式分解 4m - 8n + m<sup>2</sup> - 2mn。", options: ["(m - 2n)(4 + m)", "(m + 2n)(4 + m)", "(m - 2n)(4 - m)", "4(m - 2n) + m(m - 2n)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 p<sup>2</sup> - 5p + 6。<br>(b) 由此，因式分解 (k + 1)<sup>2</sup> - 5(k + 1) + 6。", options: ["(k - 1)(k - 2)", "(k + 3)(k - 2)", "(k - 1)(k + 2)", "(k - 3)(k - 2)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 x<sup>2</sup> + 7xy + 10y<sup>2</sup>。<br>(b) 由此，因式分解 x<sup>2</sup> + 7xy + 10y<sup>2</sup> - 4x - 8y。", options: ["(x + 2y)(x + 5y - 4)", "(x + 5y)(x + 2y - 4)", "(x + 2y - 4)(x + 5y - 4)", "(x - 2y)(x - 5y - 4)"], correctAnswerIndex: 1 },
+            ],
+            '高級': [
+                // 1-10 (Complex (a)/(b) type from user file)
+                { question: "(a) 因式分解 9m<sup>2</sup> - 25n<sup>2</sup>。<br>(b) 由此，因式分解 9m<sup>2</sup> - 25n<sup>2</sup> + 15m - 25n。", options: ["(3m - 5n)(3m + 5n + 5)", "(3m + 5n)(3m - 5n + 5)", "(3m - 5n)(3m - 5n + 5)", "(3m - 5n)(3m + 5n - 5)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 a<sup>2</sup> + 6ab + b<sup>2</sup>。<br>(b) 由此，因式分解 9a<sup>2</sup> + 6ab + b<sup>2</sup> - 6a - 2b。", options: ["(3a + b)(3a + b - 2)", "(3a + b)(3a + b + 2)", "(3a - b)(3a - b - 2)", "(3a + b)<sup>2</sup> - 2(3a + b)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 a<sup>2</sup> - 5ab + 6b<sup>2</sup>。<br>(b) 由此，因式分解 a<sup>2</sup> - 5ab + 6b<sup>2</sup> + 3a - 9b。", options: ["(a - 3b)(a - 2b + 3)", "(a - 2b)(a - 3b + 3)", "(a - 3b)(a - 2b - 3)", "(a - 3b)(a + 2b + 3)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 x<sup>2</sup> - 2x - 8。<br>(b) 由此，因式分解 x<sup>2</sup> - 2x - 8 - xy<sup>2</sup> + 4y<sup>2</sup>。", options: ["(x - 4)(x + 2 - y<sup>2</sup>)", "(x + 2)(x - 4 - y<sup>2</sup>)", "(x - 4)(x + 2 + y<sup>2</sup>)", "(x - 4)(x - 2 - y<sup>2</sup>)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 16a<sup>3</sup> - 32a<sup>2</sup>b。<br>(b) 由此，因式分解 16a<sup>3</sup> - 32a<sup>2</sup>b - ab<sup>2</sup> + 2b<sup>3</sup>。", options: ["(a - 2b)(4a - b)(4a + b)", "(a - 2b)(16a<sup>2</sup> + b<sup>2</sup>)", "(a + 2b)(4a - b)(4a + b)", "(a - 2b)(16a<sup>2</sup> - b<sup>2</sup>)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 4x<sup>2</sup> + 36x + 81。<br>(b) 由此，因式分解 (3x - 5y)<sup>2</sup> - (4x<sup>2</sup> + 36x + 81)。", options: ["(x - 5y - 9)(5x - 5y + 9)", "(x + 5y + 9)(5x - 5y - 9)", "(x - 5y - 9)(-x - 5y + 9)", "(x - 5y - 9)(x - 5y + 9)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 x<sup>2</sup> + 2xy - 8y<sup>2</sup>。<br>(b) 由此，因式分解 x<sup>2</sup> + 2xy - 8y<sup>2</sup> - 2x - 8y。", options: ["(x + 4y)(x - 2y - 2)", "(x - 2y)(x + 4y - 2)", "(x + 4y)(x - 2y + 2)", "(x - 4y)(x + 2y - 2)"], correctAnswerIndex: 0 },
+                { question: "(a) 因式分解 2m<sup>2</sup> - 3mn - 2n<sup>2</sup>。<br>(b) 由此，因式分解 2m<sup>2</sup> - 3mn - 2n<sup>2</sup> - 4m + 8n。", options: ["(m - 2n)(2m + n - 4)", "(m + 2n)(2m - n - 4)", "(m - 2n)(2m - n - 4)", "(m - 2n)(2m + n + 4)"], correctAnswerIndex: 0 },
+                { question: "因式分解 x<sup>3</sup> - x<sup>2</sup>y + 3x<sup>2</sup> - 2x + 2y - 6", options: ["(x - y + 3)(x<sup>2</sup> - 2)", "(x - y - 3)(x<sup>2</sup> - 2)", "(x - y + 3)(x<sup>2</sup> + 2)", "(x + y + 3)(x<sup>2</sup> - 2)"], correctAnswerIndex: 0 },
+                { question: "因式分解 a<sup>3</sup> - 5a<sup>2</sup>b - 5a<sup>2</sup> + a - 5b - 5", options: ["(a - 5b - 5)(a - 1)(a + 1)", "(a - 5b - 5)(a<sup>2</sup> + 1)", "(a + 5b + 5)(a - 1)(a + 1)", "(a - 5b + 5)(a - 1)(a + 1)"], correctAnswerIndex: 0 },
+                // 11-15 (Sum/Difference of Cubes)
+                { question: "因式分解 x<sup>3</sup> + 8", options: ["(x + 2)(x<sup>2</sup> - 2x + 4)", "(x + 2)(x<sup>2</sup> + 2x + 4)", "(x + 2)<sup>3</sup>", "(x - 2)(x<sup>2</sup> + 2x + 4)"], correctAnswerIndex: 0 },
+                { question: "因式分解 y<sup>3</sup> - 27", options: ["(y - 3)(y<sup>2</sup> - 3y + 9)", "(y - 3)(y<sup>2</sup> + 3y + 9)", "(y - 3)<sup>3</sup>", "(y + 3)(y<sup>2</sup> - 3y + 9)"], correctAnswerIndex: 1 },
+                { question: "因式分解 64a<sup>3</sup> + 1", options: ["(4a + 1)(16a<sup>2</sup> - 4a + 1)", "(4a + 1)(16a<sup>2</sup> + 4a + 1)", "(4a + 1)<sup>3</sup>", "(4a - 1)(16a<sup>2</sup> + 4a + 1)"], correctAnswerIndex: 0 },
+                { question: "因式分解 8p<sup>3</sup> - 125q<sup>3</sup>", options: ["(2p - 5q)(4p<sup>2</sup> + 10pq + 25q<sup>2</sup>)", "(2p - 5q)(4p<sup>2</sup> - 10pq + 25q<sup>2</sup>)", "(2p - 5q)<sup>3</sup>", "(2p + 5q)(4p<sup>2</sup> - 10pq + 25q<sup>2</sup>)"], correctAnswerIndex: 0 },
+                { question: "因式分解 m<sup>3</sup> + 216n<sup>3</sup>", options: ["(m + 6n)(m<sup>2</sup> + 6mn + 36n<sup>2</sup>)", "(m + 6n)<sup>3</sup>", "(m + 6n)(m<sup>2</sup> - 6mn + 36n<sup>2</sup>)", "(m - 6n)(m<sup>2</sup> + 6mn + 36n<sup>2</sup>)"], correctAnswerIndex: 2 },
+                // 16-20 (Complex Difference of Squares)
+                { question: "因式分解 (a + b)<sup>2</sup> - (a - b)<sup>2</sup>", options: ["2a<sup>2</sup> + 2b<sup>2</sup>", "4ab", "2b<sup>2</sup>", "4a<sup>2</sup>b<sup>2</sup>"], correctAnswerIndex: 1 },
+                { question: "因式分解 (2x + 1)<sup>2</sup> - (x - 3)<sup>2</sup>", options: ["(x + 4)(3x - 2)", "(x - 4)(3x + 2)", "(x + 4)(3x + 2)", "(3x - 2)(x - 2)"], correctAnswerIndex: 0 },
+                { question: "因式分解 a<sup>4</sup> - 16", options: ["(a<sup>2</sup> - 4)(a<sup>2</sup> + 4)", "(a - 2)(a + 2)(a<sup>2</sup> + 4)", "(a - 2)<sup>2</sup>(a + 2)<sup>2</sup>", "(a - 2)<sup>4</sup>"], correctAnswerIndex: 1 },
+                { question: "因式分解 1 - (p - q)<sup>2</sup>", options: ["(1 - p + q)(1 + p - q)", "(1 - p - q)(1 + p - q)", "(1 - p + q)(1 - p - q)", "(p - q - 1)(p - q + 1)"], correctAnswerIndex: 0 },
+                { question: "因式分解 9(x + y)<sup>2</sup> - 4(x - y)<sup>2</sup>", options: ["(x + 5y)(5x + y)", "(x - 5y)(5x - y)", "(x + 5y)<sup>2</sup>", "(x + 5y)(5x - y)"], correctAnswerIndex: 0 },
+                // 21-25 (Mixed Complex)
+                { question: "因式分解 x<sup>2</sup> - 4y<sup>2</sup> - 6x + 9", options: ["(x - 3 - 2y)(x - 3 + 2y)", "(x + 3 - 2y)(x + 3 + 2y)", "(x - 3 - 2y)<sup>2</sup>", "(x - 3)<sup>2</sup> - (2y)<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "因式分解 a<sup>2</sup> + 2ab + b<sup>2</sup> - 10a - 10b + 25", options: ["(a + b - 5)<sup>2</sup>", "(a + b + 5)<sup>2</sup>", "(a + b - 5)(a + b + 5)", "(a + b - 10)<sup>2</sup> + 25"], correctAnswerIndex: 0 },
+                { question: "因式分解 p<sup>2</sup> - q<sup>2</sup> + 2pr + r<sup>2</sup>", options: ["(p + r - q)(p + r + q)", "(p - r - q)(p - r + q)", "(p + r)<sup>2</sup> - q<sup>2</sup>", "(p - q + r)<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "因式分解 4x<sup>2</sup> - y<sup>2</sup> - 4x + 1", options: ["(2x - 1 - y)(2x - 1 + y)", "(2x + 1 - y)(2x + 1 + y)", "(2x - 1 - y)<sup>2</sup>", "(2x - 1)<sup>2</sup> - y<sup>2</sup>"], correctAnswerIndex: 0 },
+                { question: "因式分解 m<sup>3</sup> - m<sup>2</sup> - m + 1", options: ["(m - 1)<sup>2</sup>(m + 1)", "(m - 1)(m + 1)<sup>2</sup>", "(m - 1)<sup>3</sup>", "m<sup>2</sup>(m - 1) - (m - 1)"], correctAnswerIndex: 0 },
+            ]
+        };
+
+        // 總題庫
+        const allQuestionBanks = {
+            '指數': indicesQuestionBank,
+            '因式分解': factorizationQuestionBank
+        };
+
         // --- 應用程式狀態 ---
+        let currentTopic = '';
+        let currentBank = null; // 將儲存所選主題的題庫
         let currentDifficulty = '初級';
         let sessionQuestions = [];
         let currentQuestionIndex = 0;
         let sessionScore = 0;
 
         // --- DOM 元素參照 ---
+        const topicScreen = document.getElementById('topic-screen'); // 新
         const startScreen = document.getElementById('start-screen');
         const quizScreen = document.getElementById('quiz-screen');
         const summaryScreen = document.getElementById('summary-screen');
+
+        const selectTopicIndicesBtn = document.getElementById('select-topic-indices'); // 新
+        const selectTopicFactorizationBtn = document.getElementById('select-topic-factorization'); // 新
+        const backToTopicSelectBtn = document.getElementById('back-to-topic-select'); // 新
+        const quizChangeTopicBtn = document.getElementById('quiz-change-topic-btn'); // 新
+        const summaryChangeTopicBtn = document.getElementById('summary-change-topic-btn'); // 新
 
         const startButton = document.getElementById('start-button');
         const nextButton = document.getElementById('next-button');
         const nextSessionButton = document.getElementById('next-session-button');
 
+        const appTitle = document.getElementById('app-title'); // 新
+        const appSubtitle = document.getElementById('app-subtitle'); // 新
         const difficultyDisplay = document.getElementById('difficulty-display');
         const startDifficultyLabel = document.getElementById('start-difficulty-label');
 
@@ -255,11 +406,10 @@
         const currentScore = document.getElementById('current-score');
         const questionText = document.getElementById('question-text');
         const optionsContainer = document.getElementById('options-container');
-        // --- 新增元素參考 ---
+        
         const feedbackContainer = document.getElementById('feedback-container');
         const correctAnswerText = document.getElementById('correct-answer-text');
-        const answerStatus = document.getElementById('answer-status'); // 新增
-        // --- 結束新增 ---
+        const answerStatus = document.getElementById('answer-status'); 
         
         const summaryText = document.getElementById('summary-text');
         const assessmentText = document.getElementById('assessment-text');
@@ -267,12 +417,61 @@
 
 
         // --- 事件監聽 ---
+        selectTopicIndicesBtn.addEventListener('click', () => selectTopic('指數'));
+        selectTopicFactorizationBtn.addEventListener('click', () => selectTopic('因式分解'));
+        
+        backToTopicSelectBtn.addEventListener('click', showTopicScreen);
+        quizChangeTopicBtn.addEventListener('click', showTopicScreen);
+        summaryChangeTopicBtn.addEventListener('click', showTopicScreen);
+
         startButton.addEventListener('click', startSession);
         nextButton.addEventListener('click', loadNextQuestion);
-        nextSessionButton.addEventListener('click', startSession);
+        nextSessionButton.addEventListener('click', startSession); // 點擊 "下一輪" 會使用相同的 'currentTopic' 和更新後的 'currentDifficulty'
         optionsContainer.addEventListener('click', handleAnswer);
 
         // --- 核心函式 ---
+
+        /**
+         * 0. 顯示主題選擇畫面 (新的進入點)
+         */
+        function showTopicScreen() {
+            // 重設狀態
+            currentTopic = '';
+            currentBank = null;
+            currentDifficulty = '初級'; // 每次返回都重設難度
+
+            // 更新 UI
+            appTitle.textContent = '數學適性學習';
+            appSubtitle.textContent = '請選擇一個練習主題';
+            difficultyDisplay.classList.add('hidden');
+
+            // 切換畫面
+            startScreen.classList.add('hidden');
+            quizScreen.classList.add('hidden');
+            summaryScreen.classList.add('hidden');
+            topicScreen.classList.remove('hidden');
+        }
+
+        /**
+         * 1. 選擇主題
+         */
+        function selectTopic(topicName) {
+            currentTopic = topicName;
+            currentBank = allQuestionBanks[topicName];
+            currentDifficulty = '初級'; // 選擇新主題時，從初級開始
+
+            // 更新 UI
+            appTitle.textContent = `主題：${currentTopic}`;
+            appSubtitle.textContent = '準備開始練習';
+            difficultyDisplay.textContent = `目前難度：${currentDifficulty}`;
+            startDifficultyLabel.textContent = currentDifficulty;
+            difficultyDisplay.classList.remove('hidden');
+
+            // 切換畫面
+            topicScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+
 
         /**
          * Fisher-Yates (aka Knuth) Shuffle
@@ -280,14 +479,9 @@
          */
         function shuffleArray(array) {
             let currentIndex = array.length,  randomIndex;
-
-            // While there remain elements to shuffle.
             while (currentIndex != 0) {
-                // Pick a remaining element.
                 randomIndex = Math.floor(Math.random() * currentIndex);
                 currentIndex--;
-
-                // And swap it with the current element.
                 [array[currentIndex], array[randomIndex]] = [
                     array[randomIndex], array[currentIndex]];
             }
@@ -295,7 +489,7 @@
         }
 
         /**
-         * 1. 開始新一輪測驗
+         * 2. 開始新一輪測驗
          */
         function startSession() {
             // 重設狀態
@@ -303,13 +497,12 @@
             currentQuestionIndex = 0;
             sessionQuestions = [];
 
-            // 根據目前難度獲取 5 道題目
-            const availableQuestions = [...questionBank[currentDifficulty]];
+            // 根據目前主題和難度獲取 5 道題目
+            const availableQuestions = [...currentBank[currentDifficulty]];
             sessionQuestions = shuffleArray(availableQuestions).slice(0, 5);
             
             // 更新 UI
             difficultyDisplay.textContent = `目前難度：${currentDifficulty}`;
-            startDifficultyLabel.textContent = currentDifficulty;
             currentScore.textContent = `目前得分：0`;
 
             // 切換畫面
@@ -322,7 +515,7 @@
         }
 
         /**
-         * 2. 顯示目前題目
+         * 3. 顯示目前題目
          */
         function displayQuestion() {
             // 獲取目前題目
@@ -351,29 +544,25 @@
             // 隱藏反饋
             feedbackContainer.classList.add('hidden');
             correctAnswerText.innerHTML = '';
-            answerStatus.classList.add('hidden'); // 新增
-            answerStatus.textContent = ''; // 新增
+            answerStatus.classList.add('hidden'); 
+            answerStatus.textContent = ''; 
         }
 
         /**
-         * 3. 處理使用者作答
+         * 4. 處理使用者作答
          */
         function handleAnswer(e) {
-            // 確保點擊的是按鈕本身
             const selectedButton = e.target.closest('.option-btn');
-            if (!selectedButton) return;
+            if (!selectedButton || selectedButton.disabled) return; // 防止重複點擊
 
             const selectedAnswerIndex = parseInt(selectedButton.dataset.index);
-            // --- 獲取完整題目物件 ---
             const question = sessionQuestions[currentQuestionIndex];
             const correctAnwserIndex = question.correctAnswerIndex;
-            const correctAnswerString = question.options[correctAnwserIndex]; // 獲取正確答案的文字
-            // --- 結束 ---
+            const correctAnswerString = question.options[correctAnwserIndex]; 
 
             // 停用所有選項按鈕
             Array.from(optionsContainer.children).forEach(button => {
                 button.disabled = true;
-                // 移除 hover 效果
                 button.classList.remove('option-btn:hover'); 
             });
 
@@ -382,30 +571,24 @@
                 // 答對
                 sessionScore++;
                 selectedButton.classList.add('correct');
-                // --- 顯示對/錯反饋 ---
                 answerStatus.textContent = '答對了！';
                 answerStatus.className = 'mt-6 text-xl font-bold text-green-600';
                 answerStatus.classList.remove('hidden');
-                // --- 結束 ---
             } else {
-                // 答錯
+                // D答錯
                 selectedButton.classList.add('wrong');
-                // 顯示正確答案
                 const correctButton = optionsContainer.querySelector(`[data-index="${correctAnwserIndex}"]`);
                 if (correctButton) {
                     correctButton.classList.add('correct');
                 }
-                // --- 顯示對/錯反饋 ---
                 answerStatus.textContent = '答錯了';
                 answerStatus.className = 'mt-6 text-xl font-bold text-red-600';
                 answerStatus.classList.remove('hidden');
-                // --- 結束 ---
             }
 
-            // --- 顯示正確答案文字框 ---
+            // 顯示正確答案文字框
             correctAnswerText.innerHTML = correctAnswerString;
             feedbackContainer.classList.remove('hidden');
-            // --- 結束顯示 ---
 
             // 顯示「下一題」按鈕
             nextButton.classList.remove('hidden');
@@ -415,7 +598,7 @@
         }
 
         /**
-         * 4. 載入下一題或結束
+         * 5. 載入下一題或結束
          */
         function loadNextQuestion() {
             currentQuestionIndex++;
@@ -429,7 +612,7 @@
         }
 
         /**
-         * 5. 顯示總結與評估
+         * 6. 顯示總結與評估
          */
         function showSummary() {
             // 切換畫面
@@ -441,25 +624,30 @@
 
             // 難度調整邏輯
             let assessmentMsg = "";
+            let newDifficulty = currentDifficulty; // 暫存新難度
+
             if (sessionScore <= 1) {
                 // 0-1 題：保持初級 (或從中級降回初級)
-                currentDifficulty = '初級';
+                newDifficulty = '初級';
                 assessmentMsg = "看來基礎還需要加強，我們將繼續停在【初級】練習。";
                 assessmentFeedback.className = "mb-6 p-4 bg-red-50 border border-red-200 rounded-lg";
                 assessmentText.className = "text-red-800 font-medium";
             } else if (sessionScore <= 3) {
                 // 2-3 題：調整為中級
-                currentDifficulty = '中級';
+                newDifficulty = '中級';
                 assessmentMsg = "表現不錯！我們準備好進入【中級】難度了。";
                 assessmentFeedback.className = "mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg";
                 assessmentText.className = "text-yellow-800 font-medium";
             } else {
                 // 4-5 題：調整為高級
-                currentDifficulty = '高級';
+                newDifficulty = '高級';
                 assessmentMsg = "太棒了！您已精通這個級別，準備挑戰【高級】難度吧！";
                 assessmentFeedback.className = "mb-6 p-4 bg-green-50 border border-green-200 rounded-lg";
                 assessmentText.className = "text-green-800 font-medium";
             }
+
+            // 更新全域難度
+            currentDifficulty = newDifficulty;
 
             // 更新評估文字和下一輪的難度提示
             assessmentText.textContent = assessmentMsg;
@@ -469,6 +657,10 @@
             difficultyDisplay.textContent = `目前難度：${currentDifficulty}`;
             startDifficultyLabel.textContent = currentDifficulty;
         }
+
+        // --- 初始啟動 ---
+        // 應用程式現在會自動顯示 topic-screen，等待使用者操作
+        // showTopicScreen(); // 頁面載入時預設顯示主題選擇
 
     </script>
 </body>

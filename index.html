@@ -596,7 +596,7 @@
             feedbackContainer.classList.remove('hidden');
 
             // 顯示「下一題」按鈕
-            nextButton.classList.add('hidden');
+            nextButton.classList.remove('hidden'); // 修正：移除 hidden 才是顯示
             
             // 更新即時分數
             currentScore.textContent = `目前得分：${sessionScore}`;
